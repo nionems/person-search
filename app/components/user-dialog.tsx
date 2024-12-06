@@ -1,39 +1,79 @@
-// app/components/user-dialog.tsx
-'use client'
+'use client';
 
-import {  addUser } from '@/app/actions/actions'
-import { userFormSchema, User, UserFormData } from '@/app/actions/schemas'
+import React from 'react';
+import { addUser, updateUser } from '@/app/actions/actions';
+import { userFormSchema, User, UserFormData } from '@/app/actions/schemas';
+import { UserForm } from './user-form';
+import MutableDialog, { ActionState } from '@/components/mutable-dialog';
 
-import { UserForm } from './user-form'
-import MutableDialog, { ActionState }  from '@/components/mutable-dialog'
+interface UserDialogProps {
+  existingUser?: User; // If provided, dialog is in edit mode
+  openDirectly?: boolean; // Open dialog directly without a trigger button
+  onClose?: () => void; // Callback when dialog is closed
+}
 
+export function UserDialog({ existingUser, openDirectly = false, onClose }: UserDialogProps) {
+  const isEdit = !!existingUser;
 
-export function UserDialog() {
   const handleAddUser = async (data: UserFormData): Promise<ActionState<User>> => {
     try {
-      const newUser = await addUser(data)
+      const newUser = await addUser(data);
       return {
         success: true,
         message: `User ${newUser.name} added successfully`,
-        data: newUser
-      }
+        data: newUser,
+      };
     } catch (error) {
+      console.error('Add User Error:', error);
       return {
         success: false,
-        message: 'Failed to add user'
-      }
+        message: 'Failed to add user. Please try again.',
+      };
     }
-  }
+  };
+
+  const handleEditUser = async (data: UserFormData): Promise<ActionState<User>> => {
+    if (!existingUser) {
+      return {
+        success: false,
+        message: 'No user selected for editing',
+      };
+    }
+
+    try {
+      const updatedUser = await updateUser({ ...data, id: existingUser.id });
+      return {
+        success: true,
+        message: `User ${updatedUser.name} updated successfully`,
+        data: updatedUser,
+      };
+    } catch (error) {
+      console.error('Edit User Error:', error);
+      return {
+        success: false,
+        message: 'Failed to update user. Please try again.',
+      };
+    }
+  };
 
   return (
     <MutableDialog<UserFormData>
+      key={existingUser?.id || 'add-user'} // Refresh dialog when editing a different user
       formSchema={userFormSchema}
       FormComponent={UserForm}
-      action={handleAddUser}
-      triggerButtonLabel="Add User"
+      action={isEdit ? handleEditUser : handleAddUser}
+      defaultValues={existingUser} // Prefill form if editing
+      triggerButtonLabel={openDirectly ? undefined : isEdit ? 'Edit User' : 'Add User'}
       addDialogTitle="Add New User"
-      dialogDescription="Fill out the form below to add a new user."
-      submitButtonLabel="Add User"
+      editDialogTitle={`Edit User: ${existingUser?.name}`}
+      dialogDescription={
+        isEdit
+          ? 'Make changes to the user details below and click save.'
+          : 'Fill out the form below to add a new user.'
+      }
+      submitButtonLabel={isEdit ? 'Save Changes' : 'Add User'}
+      openDirectly={openDirectly} // Open dialog directly if needed
+      onClose={onClose} // Callback for dialog close
     />
-  )
+  );
 }
