@@ -10,9 +10,10 @@ import { User, UserFormData } from '@/app/actions/schemas';
 interface UserCardProps {
   user: User;
   onUpdate: (updatedUser: User) => void; // Callback to update user details
+  onDelete: (userId: string) => void; // Callback to delete user
 }
 
-export function UserCard({ user, onUpdate }: UserCardProps) {
+export function UserCard({ user, onUpdate, onDelete }: UserCardProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm<UserFormData>({
@@ -35,7 +36,13 @@ export function UserCard({ user, onUpdate }: UserCardProps) {
       name: user.name,
       phoneNumber: user.phoneNumber,
       email: user.email,
-   });
+    });
+  };
+
+  const handleDelete = () => {
+    if (confirm(`Are you sure you want to delete ${user.name}?`)) {
+      onDelete(user.id);
+    }
   };
 
   return (
@@ -43,13 +50,19 @@ export function UserCard({ user, onUpdate }: UserCardProps) {
       {isEditing ? (
         <div className="p-4 space-y-4">
           <UserForm form={form} />
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
+          <div className="flex justify-between items-center">
+            {/* Delete button only visible in edit mode */}
+            <Button variant="destructive" onClick={handleDelete}>
+              Delete
             </Button>
-            <Button onClick={form.handleSubmit(handleSave)}>
-              Save
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button onClick={form.handleSubmit(handleSave)}>
+                Save
+              </Button>
+            </div>
           </div>
         </div>
       ) : (
@@ -76,7 +89,7 @@ export function UserCard({ user, onUpdate }: UserCardProps) {
               </div>
             )}
           </CardContent>
-          <div className="p-4">
+          <div className="p-4 flex justify-end">
             <Button variant="secondary" onClick={() => setIsEditing(true)}>
               Edit
             </Button>

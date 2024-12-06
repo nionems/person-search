@@ -25,11 +25,13 @@ interface GenericDialogProps<T extends FieldValues> {
   formSchema: ZodType<T>;
   FormComponent: React.ComponentType<{ form: UseFormReturn<T> }>;
   action?: (data: T) => Promise<ActionState<T>>;
+  deleteAction?: (id: string) => Promise<boolean>; // Action to delete the user
   triggerButtonLabel?: string;
   addDialogTitle?: string;
   editDialogTitle?: string;
   dialogDescription?: string;
   submitButtonLabel?: string;
+  deleteButtonLabel?: string;
   defaultValues?: DefaultValues<T>;
 }
 
@@ -37,6 +39,7 @@ export default function MutableDialog<T extends FieldValues>({
   formSchema,
   FormComponent,
   action,
+  deleteAction,
   defaultValues,
   triggerButtonLabel = defaultValues ? 'Edit' : 'Add',
   addDialogTitle = 'Add',
@@ -45,25 +48,25 @@ export default function MutableDialog<T extends FieldValues>({
     ? "Make changes to your item here. Click save when you're done."
     : 'Fill out the form below to add a new item.',
   submitButtonLabel = defaultValues ? 'Save' : 'Add',
+  deleteButtonLabel = 'Delete',
 }: GenericDialogProps<T>) {
   const [open, setOpen] = useState(false);
 
   const form = useForm<T>({
     resolver: async (values) => {
       try {
-        console.log('Form values before validation:', values); // Log form values
-        const result = formSchema.parse(values); // Validate with Zod schema
+        console.log('Form values before validation:', values);
+        const result = formSchema.parse(values);
         console.log('Validation passed:', result);
         return { values: result, errors: {} };
       } catch (err: any) {
-        console.log('Validation errors:', err.formErrors?.fieldErrors); // Log validation errors
+        console.log('Validation errors:', err.formErrors?.fieldErrors);
         return { values: {}, errors: err.formErrors?.fieldErrors };
       }
     },
     defaultValues: defaultValues,
   });
 
-  // Reset the form when the dialog is closed
   useEffect(() => {
     if (!open) {
       form.reset();
@@ -75,20 +78,26 @@ export default function MutableDialog<T extends FieldValues>({
       throw new Error('No action function provided');
     }
 
-    try {
-      const actions = await action(data); // Call the provided action
-      console.log('actions:', actions);
+    const actions = await action(data);
 
-      if (actions.success) {
-        toast.success(actions.message || 'Operation successful!');
+    if (actions.success) {
+      toast.success(actions.message || 'Operation successful!');
+    } else {
+      toast.error(actions.message || 'Operation failed!');
+    }
+    setOpen(false);
+  }
+
+  async function handleDelete() {
+    if (!deleteAction || !defaultValues?.id) return;
+    if (confirm('Are you sure you want to delete this item?')) {
+      const success = await deleteAction(defaultValues.id);
+      if (success) {
+        toast.success('Item deleted successfully!');
+        setOpen(false);
       } else {
-        toast.error(actions.message || 'Operation failed!');
+        toast.error('Failed to delete item.');
       }
-    } catch (error) {
-      console.error('Submission error:', error);
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setOpen(false);
     }
   }
 
@@ -104,7 +113,16 @@ export default function MutableDialog<T extends FieldValues>({
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <FormComponent form={form} />
-          <div className="mt-4">
+          <div className="mt-4 flex justify-between">
+            {defaultValues && deleteAction && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+              >
+                {deleteButtonLabel}
+              </Button>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Close

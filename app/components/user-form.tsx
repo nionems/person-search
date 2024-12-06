@@ -27,9 +27,15 @@ export function UserForm({ form }: FormComponentProps) {
           <FormItem>
             <FormLabel>Name</FormLabel>
             <FormControl>
-              <Input placeholder="John Doe" {...field} />
+              <Input
+                placeholder="Enter full name"
+                {...field}
+                aria-describedby="name-helper-text"
+              />
             </FormControl>
-            <FormDescription>Enter full name.</FormDescription>
+            <FormDescription id="name-helper-text">
+              Provide the user's full name.
+            </FormDescription>
             {fieldState.error && (
               <p className="text-red-600 text-sm mt-1">{fieldState.error.message}</p>
             )}
@@ -45,9 +51,16 @@ export function UserForm({ form }: FormComponentProps) {
           <FormItem>
             <FormLabel>Email</FormLabel>
             <FormControl>
-              <Input type="email" placeholder="john@example.com" {...field} />
+              <Input
+                type="email"
+                placeholder="Enter email address"
+                {...field}
+                aria-describedby="email-helper-text"
+              />
             </FormControl>
-            <FormDescription>Enter email address.</FormDescription>
+            <FormDescription id="email-helper-text">
+              Provide a valid email address.
+            </FormDescription>
             {fieldState.error && (
               <p className="text-red-600 text-sm mt-1">{fieldState.error.message}</p>
             )}
@@ -63,9 +76,15 @@ export function UserForm({ form }: FormComponentProps) {
           <FormItem>
             <FormLabel>Phone Number</FormLabel>
             <FormControl>
-              <Input placeholder="123-456-7890" {...field} />
+              <Input
+                placeholder="Enter phone number (e.g., 0412345678)"
+                {...field}
+                aria-describedby="phone-helper-text"
+              />
             </FormControl>
-            <FormDescription>Enter phone number in Australian format.</FormDescription>
+            <FormDescription id="phone-helper-text">
+              Enter a valid Australian phone number.
+            </FormDescription>
             {fieldState.error && (
               <p className="text-red-600 text-sm mt-1">{fieldState.error.message}</p>
             )}
