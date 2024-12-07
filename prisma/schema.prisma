@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Change to your preferred database provider (e.g., "mysql" or "sqlite")
+  url      = env("DATABASE_URL") // Replace with your database connection URL
+}
+
+model User {
+  id          String @id @default(cuid()) // Unique identifier
+  name        String @db.VarChar(255)    // Minimum 2 characters
+  email       String @unique @db.VarChar(255) // Unique, valid email
+  phoneNumber String @db.VarChar(15)    // Matches the Australian mobile number format
+  createdAt   DateTime @default(now())  // Auto-generated creation timestamp
+  updatedAt   DateTime @updatedAt       // Auto-updated on record changes
+}

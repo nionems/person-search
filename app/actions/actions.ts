@@ -1,62 +1,86 @@
 'use server';
 
-import { User, userSchema } from './schemas';
+import { PrismaClient } from '@prisma/client';
+import { userSchema } from './schemas'; // Import Zod schema for validation
 
-let users: User[] = [
-    { id: '1', name: 'John Doe', phoneNumber: '0420224360', email: 'john@example.com' },
-    { id: '2', name: 'Jane Smith', phoneNumber: '0420224362', email: 'jane@example.com' },
-    { id: '3', name: 'Alice Johnson', phoneNumber: '0420224345', email: 'alice@example.com' },
-    { id: '4', name: 'Bob Williams', phoneNumber: '0420224344', email: 'bob@example.com' },
-    { id: '5', name: 'Charlie Brown', phoneNumber: '0420224760', email: 'charlie@example.com' },
-    { id: '6', name: 'Stacey Cooper', phoneNumber: '0490224344', email: 'sc@gmail.com' },
-    { id: '7', name: 'Lionel Coevoet', phoneNumber: '0424524760', email: 'nionems@icloud.com' },
-];
+const prisma = new PrismaClient(); // Initialize Prisma Client for database operations
 
 // Search for users by query
 export async function searchUsers(query: string): Promise<User[]> {
     console.log('Searching users with query:', query);
-    return users.filter(user => user.name.toLowerCase().startsWith(query.toLowerCase()));
+
+    // Find users whose names start with the query, case-insensitively
+    const users = await prisma.user.findMany({
+        where: {
+            name: {
+                startsWith: query, // Matches names that start with the query
+                mode: 'insensitive', // Makes the search case-insensitive
+            },
+        },
+    });
+
+    console.log('Found users:', users);
+    return users;
 }
 
 // Add a new user
 export async function addUser(data: Omit<User, 'id'>): Promise<User> {
-    const newId = (users.length + 1).toString();
-    const newUser = { ...data, id: newId };
-    const validatedUser = userSchema.parse(newUser); // Validate with schema
-    users.push(validatedUser);
-    console.log('User added:', validatedUser);
-    return validatedUser;
+    // Validate the input data using Zod (excluding 'id' since it will be auto-generated)
+    const validatedUser = userSchema.omit({ id: true }).parse(data);
+
+    // Create a new user in the database
+    const newUser = await prisma.user.create({
+        data: validatedUser,
+    });
+
+    console.log('User added:', newUser);
+    return newUser; // Return the newly created user
 }
 
 // Update an existing user
 export async function updateUser(data: User): Promise<User> {
-    const userIndex = users.findIndex(user => user.id === data.id);
-    if (userIndex === -1) {
-        throw new Error(`User with ID ${data.id} not found.`);
-    }
-    
-    const updatedUser = { ...users[userIndex], ...data };
-    const validatedUser = userSchema.parse(updatedUser); // Validate with schema
-    users[userIndex] = validatedUser;
-    console.log('User updated:', validatedUser);
-    return validatedUser;
+    // Validate the input data using Zod
+    const validatedUser = userSchema.parse(data);
+
+    // Update the user in the database using their 'id'
+    const updatedUser = await prisma.user.update({
+        where: {
+            id: validatedUser.id, // Match user by 'id'
+        },
+        data: validatedUser, // Update with the new data
+    });
+
+    console.log('User updated:', updatedUser);
+    return updatedUser; // Return the updated user
 }
 
 // Delete a user by ID
 export async function deleteUser(id: string): Promise<boolean> {
-    const initialLength = users.length;
-    users = users.filter(user => user.id !== id);
-    if (users.length < initialLength) {
+    try {
+        // Delete the user in the database using their 'id'
+        await prisma.user.delete({
+            where: {
+                id, // Match user by 'id'
+            },
+        });
+
         console.log(`User with ID ${id} deleted.`);
-        return true;
-    } else {
-        console.error(`User with ID ${id} not found.`);
-        return false;
+        return true; // Return true if deletion is successful
+    } catch (error) {
+        console.error(`Failed to delete user with ID ${id}:`, error);
+        return false; // Return false if deletion fails
     }
 }
 
-// Optional: Get a user by ID
+// Get a user by ID
 export async function getUserById(id: string): Promise<User | null> {
-    const user = users.find(user => user.id === id);
-    return user || null;
+    // Find a user by their 'id' in the database
+    const user = await prisma.user.findUnique({
+        where: {
+            id, // Match user by 'id'
+        },
+    });
+
+    console.log('Fetched user:', user);
+    return user || null; // Return the user if found, otherwise null
 }

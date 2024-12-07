@@ -24,12 +24,26 @@ export function UserCard({ user, onUpdate, onDelete }: UserCardProps) {
     },
   });
 
-  const handleSave = (data: UserFormData) => {
-    setIsEditing(false);
-    const updatedUser: User = { ...user, ...data };
-    onUpdate(updatedUser);
+ // Handle saving the updated user data
+ const handleSave = async (data: UserFormData) => {
+  try {
+    setIsEditing(false); // Exit edit mode
+    const updatedUser: User = { ...user, ...data }; // Merge updated data with existing user
+    onUpdate(updatedUser); // Call the onUpdate callback
+  } catch (error) {
+    alert('Failed to update user. Please try again.'); // Show error if update fails
+  }
+};
+  
+  const handleDelete = async () => {
+    if (confirm(`Are you sure you want to delete ${user.name}?`)) {
+      try {
+        await onDelete(user.id);
+      } catch (error) {
+        alert('Failed to delete user. Please try again.');
+      }
+    }
   };
-
   const handleCancel = () => {
     setIsEditing(false);
     form.reset({
@@ -37,12 +51,6 @@ export function UserCard({ user, onUpdate, onDelete }: UserCardProps) {
       phoneNumber: user.phoneNumber,
       email: user.email,
     });
-  };
-
-  const handleDelete = () => {
-    if (confirm(`Are you sure you want to delete ${user.name}?`)) {
-      onDelete(user.id);
-    }
   };
 
   return (
