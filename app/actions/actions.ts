@@ -4,11 +4,11 @@
 import { User, userSchema } from './schemas'
 
 const users: User[] = [
-    { id: '1', name: 'John Doe', phoneNumber: '123-456-7890', email: 'john@example.com' },
-    { id: '2', name: 'Jane Smith', phoneNumber: '234-567-8901', email: 'jane@example.com' },
-    { id: '3', name: 'Alice Johnson', phoneNumber: '345-678-9012', email: 'alice@example.com' },
-    { id: '4', name: 'Bob Williams', phoneNumber: '456-789-0123', email: 'bob@example.com' },
-    { id: '5', name: 'Charlie Brown', phoneNumber: '567-890-1234', email: 'charlie@example.com' },
+    { id: '1', name: 'John Doe', phoneNumber: '0420224360', email: 'john@example.com' },
+    { id: '2', name: 'Jane Smith', phoneNumber: '0420224360', email: 'jane@example.com' },
+    { id: '3', name: 'Alice Johnson', phoneNumber: '0420224360', email: 'alice@example.com' },
+    { id: '4', name: 'Bob Williams', phoneNumber: '0420224360', email: 'bob@example.com' },
+    { id: '5', name: 'Charlie Brown', phoneNumber: '0420224360', email: 'charlie@example.com' },
 ]
 
 export async function searchUsers(query: string): Promise<User[]> {
