@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { User, userSchema } from './schemas';
 
 const users: User[] = [
@@ -22,10 +23,16 @@ export async function addUser(data: Omit<User, 'id'>): Promise<User> {
   const newUser = { ...data, id: newId };
   const validatedUser = userSchema.parse(newUser);
   users.push(validatedUser);
+
+  // Revalidate relevant path (if necessary)
+  revalidatePath('/users'); // Replace '/users' with the actual path showing user list
   return validatedUser;
 }
 
-export async function updateUser(id: string, updatedData: Partial<Omit<User, 'id'>>): Promise<User | null> {
+export async function updateUser(
+  id: string,
+  updatedData: Partial<Omit<User, 'id'>>
+): Promise<User | null> {
   const userIndex = users.findIndex((user) => user.id === id);
   if (userIndex === -1) {
     console.error(`User with id ${id} not found`);
@@ -35,5 +42,9 @@ export async function updateUser(id: string, updatedData: Partial<Omit<User, 'id
   const updatedUser = { ...users[userIndex], ...updatedData };
   const validatedUser = userSchema.parse(updatedUser);
   users[userIndex] = validatedUser;
+
+  // Revalidate relevant path (if necessary)
+  revalidatePath('/users'); // Replace '/users' with the actual path showing user list
+
   return validatedUser;
 }
