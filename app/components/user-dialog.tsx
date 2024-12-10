@@ -1,39 +1,56 @@
-// app/components/user-dialog.tsx
-'use client'
+'use client';
 
-import {  addUser } from '@/app/actions/actions'
-import { userFormSchema, User, UserFormData } from '@/app/actions/schemas'
+import { addUser, updateUser } from '@/app/actions/actions';
+import { userFormSchema, User, UserFormData } from '@/app/actions/schemas';
+import { UserForm } from './user-form';
+import MutableDialog, { ActionState } from '@/components/mutable-dialog';
 
-import { UserForm } from './user-form'
-import MutableDialog, { ActionState }  from '@/components/mutable-dialog'
+interface UserDialogProps {
+  user?: User; // Optional user for edit mode
+  onUserUpdate?: (updatedUser: User) => void; // Callback for updating UI
+}
 
-
-export function UserDialog() {
-  const handleAddUser = async (data: UserFormData): Promise<ActionState<User>> => {
+export function UserDialog({ user, onUserUpdate }: UserDialogProps) {
+  const handleAction = async (data: UserFormData): Promise<ActionState<User>> => {
     try {
-      const newUser = await addUser(data)
-      return {
-        success: true,
-        message: `User ${newUser.name} added successfully`,
-        data: newUser
+      if (user) {
+        // Edit Mode
+        const updatedUser = await updateUser(user.id, data);
+        if (!updatedUser) throw new Error('User update failed');
+        onUserUpdate?.(updatedUser);
+        return {
+          success: true,
+          message: `User ${updatedUser.name} updated successfully`,
+          data: updatedUser,
+        };
+      } else {
+        // Add Mode
+        const newUser = await addUser(data);
+        return {
+          success: true,
+          message: `User ${newUser.name} added successfully`,
+          data: newUser,
+        };
       }
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: 'Failed to add user'
-      }
+        message: error.message || 'Failed to process action',
+      };
     }
-  }
+  };
 
   return (
     <MutableDialog<UserFormData>
       formSchema={userFormSchema}
       FormComponent={UserForm}
-      action={handleAddUser}
-      triggerButtonLabel="Add User"
+      action={handleAction}
       addDialogTitle="Add New User"
-      dialogDescription="Fill out the form below to add a new user."
-      submitButtonLabel="Add User"
+      editDialogTitle="Edit User"
+      dialogDescription="Update the user details below."
+      submitButtonLabel="Save Changes"
+      defaultValues={user || undefined} // Pre-fill form in edit mode
+      triggerButtonLabel={undefined} // Prevent Add button from appearing
     />
-  )
+  );
 }
