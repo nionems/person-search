@@ -4,6 +4,7 @@ import { addUser, updateUser } from '@/app/actions/actions';
 import { userFormSchema, User, UserFormData } from '@/app/actions/schemas';
 import { UserForm } from './user-form';
 import MutableDialog, { ActionState } from '@/components/mutable-dialog';
+import { FaEdit } from 'react-icons/fa'; // Importing FontAwesome edit icon
 
 interface UserDialogProps {
   user?: User; // Optional user for edit mode
@@ -46,11 +47,23 @@ export function UserDialog({ user, onUserUpdate }: UserDialogProps) {
       FormComponent={UserForm}
       action={handleAction}
       addDialogTitle="Add New User"
-      editDialogTitle="Edit User"
+      editDialogTitle={`Edit User: ${user?.name || ''}`}
       dialogDescription="Update the user details below."
       submitButtonLabel="Save Changes"
       defaultValues={user || undefined} // Pre-fill form in edit mode
-      triggerButtonLabel={undefined} // Prevent Add button from appearing
+      customTrigger={
+        user ? (
+          <button
+            className="edit-icon-button"
+            aria-label={`Edit ${user.name}`}
+            title={`Edit ${user.name}`}
+          >
+            <FaEdit />
+          </button>
+        ) : (
+          <button className="add-user-button">Add User</button>
+        )
+      }
     />
   );
 }
