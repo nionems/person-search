@@ -24,8 +24,8 @@ export async function addUser(data: Omit<User, 'id'>): Promise<User> {
   const validatedUser = userSchema.parse(newUser);
   users.push(validatedUser);
 
-  // Revalidate relevant path (if necessary)
-  revalidatePath('/users'); // Replace '/users' with the actual path showing user list
+  // Revalidate the path displaying the user list
+  revalidatePath('/users'); // Replace '/users' with the actual user list path
   return validatedUser;
 }
 
@@ -43,8 +43,32 @@ export async function updateUser(
   const validatedUser = userSchema.parse(updatedUser);
   users[userIndex] = validatedUser;
 
-  // Revalidate relevant path (if necessary)
-  revalidatePath('/users'); // Replace '/users' with the actual path showing user list
-
+  // Revalidate the path displaying the user list
+  revalidatePath('/users'); // Replace '/users' with the actual user list path
   return validatedUser;
+}
+
+export async function deleteUser(id: string): Promise<boolean> {
+  const userIndex = users.findIndex((user) => user.id === id);
+  if (userIndex === -1) {
+    console.error(`User with id ${id} not found`);
+    return false;
+  }
+  const deleteUserById = (id: string) => {
+    // Example logic for deleting a user by ID
+    const updatedUsers = users.filter((user) => user.id !== id);
+  
+    // Update the state (or trigger a revalidation in server-side apps)
+    setUsers(updatedUsers); // For client-side state
+    console.log(`User with ID ${id} deleted successfully`);
+  };
+  
+
+  users.splice(userIndex, 1); // Remove the user from the array
+
+  // Revalidate the path displaying the user list
+  revalidatePath('/users'); // Replace '/users' with the actual user list path
+
+  console.log(`User with id ${id} deleted successfully`);
+  return true;
 }

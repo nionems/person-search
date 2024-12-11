@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, Mail, MapPin, Edit } from 'lucide-react';
 import MutableDialog from '@/components/mutable-dialog';
 import { userFormSchema, UserFormData } from '@/app/actions/schemas';
 import { UserForm } from './user-form';
@@ -19,27 +18,34 @@ interface User {
 interface UserCardProps {
   user: User;
   onUserUpdate: (updatedUser: User) => void; // Callback to update the user list
+  onUserDelete: (userId: string) => void;   // Callback to delete the user
 }
 
-export function UserCard({ user, onUserUpdate }: UserCardProps) {
+export function UserCard({ user, onUserUpdate, onUserDelete }: UserCardProps) {
   const [editing, setEditing] = useState(false);
 
   const handleEditClick = () => {
-    console.log('Edit button clicked'); // Debugging log
     setEditing(true);
   };
 
+  const handleDeleteClick = (userId: string) => {
+    if (confirm(`Are you sure you want to delete user with ID ${userId}?`)) {
+      // Trigger deletion logic via a central mechanism
+      deleteUserById(userId);
+    }
+  };
+  
+
   const handleEditAction = async (data: UserFormData) => {
     try {
-      const updatedUser = { ...user, ...data }; // Merge new data into existing user
-      console.log('Updated user:', updatedUser); // Debugging log
+      const updatedUser = { ...user, ...data };
       onUserUpdate(updatedUser);
       return {
         success: true,
         message: `User ${data.name} updated successfully`,
       };
     } catch (error) {
-      console.error('Failed to update user:', error); // Debugging log
+      console.error('Failed to update user:', error);
       return {
         success: false,
         message: 'Failed to update user',
@@ -65,15 +71,13 @@ export function UserCard({ user, onUserUpdate }: UserCardProps) {
         <div className="flex flex-col">
           <CardTitle className="text-2xl flex items-center gap-2">
             {user.name}
-            {/* Inline Edit Button */}
             <Button
               variant="ghost"
               size="sm"
               className="p-1 text-gray-500 hover:text-gray-800"
               onClick={handleEditClick}
-              aria-label="Edit User"
             >
-              <Edit className="w-5 h-5" />
+              Edit
             </Button>
           </CardTitle>
           <Badge variant="secondary" className="w-fit mt-1">
@@ -82,28 +86,40 @@ export function UserCard({ user, onUserUpdate }: UserCardProps) {
         </div>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <div className="flex items-center gap-2">
-          <Phone className="w-4 h-4 text-muted-foreground" />
-          <span>{user.phoneNumber}</span>
+        <div className="flex items-center">
+          <span>Phone:</span>
+          <span className="ml-2">{user.phoneNumber}</span>
         </div>
         {user.email && (
-          <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-muted-foreground" />
-            <span>{user.email}</span>
+          <div className="flex items-center">
+            <span>Email:</span>
+            <span className="ml-2">{user.email}</span>
           </div>
         )}
         {user.location && (
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-muted-foreground" />
-            <span>{user.location}</span>
+          <div className="flex items-center">
+            <span>Location:</span>
+            <span className="ml-2">{user.location}</span>
           </div>
         )}
       </CardContent>
 
+      {/* Footer with Delete Button */}
+      <CardFooter className="flex justify-end">
+        <Button
+          variant="destructive"
+          size="sm"
+          className="mt-4"
+          onClick={handleDeleteClick}
+        >
+          Delete
+        </Button>
+      </CardFooter>
+
       {/* Edit Dialog */}
       <MutableDialog<UserFormData>
-        open={editing} // Control dialog visibility
-        onOpenChange={setEditing} // Close dialog on cancel or completion
+        open={editing}
+        onOpenChange={setEditing}
         formSchema={userFormSchema}
         FormComponent={UserForm}
         action={handleEditAction}
