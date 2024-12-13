@@ -1,41 +1,56 @@
-import MutableDialog from '@/app/components/mutable-dialog';
+'use client';
+
+import { useState } from 'react';
+import { UserFormData, userFormSchema } from '@/app/actions/schemas';
 import { UserForm } from './user-form';
-import { useForm, UseFormReturn } from 'react-hook-form';
-import { UserFormData } from '@/app/actions/schemas';
+import { editUser } from '@/app/actions/actions';
+import MutableDialog from '@/app/components/mutable-dialog';
 
-
-
-interface EditUserDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  defaultValues: UserFormData;
-  onSave: (updatedUser: UserFormData) => void;
+interface UserCardProps {
+  user: UserFormData & { id: string };
+  onSave: (updatedUser: UserFormData & { id: string }) => void;
 }
 
-export function EditUserDialog({
-  isOpen,
-  onClose,
-  defaultValues,
-  onSave,
-}: EditUserDialogProps) {
-  const form = useForm<UserFormData>({
-    defaultValues,
-  });
+export function UserCard({ user, onSave }: UserCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
 
-  
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
 
-  const handleFormSubmit = (data: UserFormData) => {
-    console.log('Form submitted with:', data); // Debug form data
-    onSave(data);
-    onClose();
+  const handleSave = async (updatedUser: UserFormData) => {
+    const updatedUserData = await editUser(user.id, updatedUser); // Call server function directly
+    if (updatedUserData) {
+      onSave(updatedUserData);
+    } else {
+      console.error('Failed to update user');
+    }
+    setIsEditing(false);
   };
 
   return (
-    <MutableDialog open={isOpen} onOpenChange={onClose}>
-      <div>
-        <h2>Edit User</h2>
-        <UserForm form={form} onSubmit={form.handleSubmit(handleFormSubmit)} />
-      </div>
-    </MutableDialog>
+    <div className="user-card">
+      <h3>{user.name}</h3>
+      <p>Email: {user.email}</p>
+      <p>Phone: {user.phoneNumber}</p>
+      <button onClick={handleEditClick}>Edit</button>
+
+      {isEditing && (
+        <MutableDialog<UserFormData>
+          formSchema={userFormSchema}
+          FormComponent={UserForm}
+          action={async (data) => {
+            await handleSave(data);
+            return { success: true, message: 'User updated successfully' };
+          }}
+          defaultValues={user}
+          triggerButtonLabel="Edit User"
+          addDialogTitle="Edit User"
+          dialogDescription="Update the user details below."
+          submitButtonLabel="Save"
+          onOpenChange={(open) => setIsEditing(open)}
+        />
+      )}
+    </div>
   );
 }

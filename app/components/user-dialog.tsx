@@ -1,39 +1,37 @@
-// app/components/user-dialog.tsx
-'use client'
+'use client';
 
-import {  addUser, editUser} from '@/app/actions/actions'
-import { userFormSchema, User, UserFormData } from '@/app/actions/schemas'
-
-import { UserForm  } from './user-form'
-import MutableDialog, { ActionState }  from '@/components/mutable-dialog'
-
+import React, { useState } from 'react';
+import MutableDialog from '@/components/mutable-dialog';
+import { userFormSchema, UserFormData } from '@/app/actions/schemas';
+import { UserForm } from './user-form';
 
 export function UserDialog() {
-  const handleAddUser = async (data: UserFormData): Promise<ActionState<User>> => {
-    try {
-      const newUser = await addUser(data)
-      return {
-        success: true,
-        message: `User ${newUser.name} added successfully`,
-        data: newUser
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to add user'
-      }
-    }
-  }
+  const [editData, setEditData] = useState<UserFormData | undefined>(undefined);
+
+  const handleEditClick = (user: UserFormData) => {
+    setEditData(user); // Set defaultValues for editing
+  };
 
   return (
-    <MutableDialog<UserFormData>
-      formSchema={userFormSchema}
-      FormComponent={UserForm}
-      action={handleAddUser}
-      triggerButtonLabel="Add User"
-      addDialogTitle="Add New User"
-      dialogDescription="Fill out the form below to add a new user."
-      submitButtonLabel="Add User"
-    />
-  )
+    <div>
+      <button onClick={() => handleEditClick({ name: 'John Doe', email: 'john@example.com' })}>
+        Edit User
+      </button>
+      <MutableDialog<UserFormData>
+        formSchema={userFormSchema}
+        FormComponent={UserForm}
+        action={async (data) => {
+          // Perform add/edit action
+          console.log(data);
+          return { success: true, message: 'User updated' };
+        }}
+        triggerButtonLabel="Add User"
+        addDialogTitle="Add New User"
+        editDialogTitle="Edit User"
+        dialogDescription="Fill out the form below."
+        submitButtonLabel="Save Changes"
+        defaultValues={editData}
+      />
+    </div>
+  );
 }

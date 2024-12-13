@@ -50,18 +50,24 @@ export default function MutableDialog<T extends FieldValues>({
         const result = formSchema.parse(values);
         return { values: result, errors: {} };
       } catch (err: any) {
-        return { values: {}, errors: err.formErrors?.fieldErrors };
+        return { values: {}, errors: err.formErrors?.fieldErrors || {} };
       }
     },
     defaultValues,
   });
 
+  // Reset form values whenever the dialog opens or defaultValues change
   useEffect(() => {
-    if (!open) form.reset();
-  }, [open, form]);
+    if (open) {
+      form.reset(defaultValues);
+    }
+  }, [open, defaultValues, form]);
 
   async function handleSubmit(data: T) {
-    if (!action) return;
+    if (!action) {
+      toast.error('No action defined for this dialog.');
+      return;
+    }
     const result = await action(data);
     if (result.success) {
       toast.success(result.message || 'Success');
