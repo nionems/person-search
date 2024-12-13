@@ -1,10 +1,10 @@
 // app/components/user-dialog.tsx
 'use client'
 
-import {  addUser } from '@/app/actions/actions'
+import {  addUser, editUser} from '@/app/actions/actions'
 import { userFormSchema, User, UserFormData } from '@/app/actions/schemas'
 
-import { UserForm } from './user-form'
+import { UserForm  } from './user-form'
 import MutableDialog, { ActionState }  from '@/components/mutable-dialog'
 
 

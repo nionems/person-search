@@ -1,4 +1,3 @@
-// app/actions.ts
 'use server'
 
 import { User, userSchema } from './schemas'
@@ -11,17 +10,36 @@ const users: User[] = [
     { id: '5', name: 'Charlie Brown', phoneNumber: '0420224360', email: 'charlie@example.com' },
 ]
 
+// Search for users based on a query string
 export async function searchUsers(query: string): Promise<User[]> {
-//   const users = await getUsers()
   console.log('Searching users with query:', query)
+  
   return users.filter(user => user.name.toLowerCase().startsWith(query.toLowerCase()))
+  
 }
 
+// Add a new user to the list
 export async function addUser(data: Omit<User, 'id'>): Promise<User> {
-//   const users = await getUsers() // Load current users
   const newId = (users.length + 1).toString()
   const newUser = { ...data, id: newId }
   const validatedUser = userSchema.parse(newUser)
   users.push(validatedUser)
+  return validatedUser
+}
+
+// Edit an existing user's information
+export async function editUser(id: string, updatedData: Partial<Omit<User, 'id'>>): Promise<User | null> {
+  const userIndex = users.findIndex(user => user.id === id)
+
+  if (userIndex === -1) {
+    console.error(`User with ID ${id} not found.`)
+    return null
+  }
+
+  const updatedUser = { ...users[userIndex], ...updatedData }
+  const validatedUser = userSchema.parse(updatedUser) // Validate the updated user data
+  users[userIndex] = validatedUser
+
+  console.log('User updated:', validatedUser)
   return validatedUser
 }

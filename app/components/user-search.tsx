@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import AsyncSelect from 'react-select/async'
 import { searchUsers } from '@/app/actions/actions'
-import { UserCard } from './user-card'
+import { UserCard } from '@/app/components/user-card';
 import { User } from '@/app/actions/schemas'
 
 // Option type remains the same
