@@ -1,43 +1,68 @@
 'use server';
 
-import { User, userSchema } from './schemas';
+import prisma from '@/lib/prisma'; // Adjust the path based on your project structure
+import { userSchema, UserFormData } from './schemas';
 
-const users: User[] = [
-  { id: '1', name: 'John Doe', phoneNumber: '0420224360', email: 'john@example.com' },
-  { id: '2', name: 'Jane Smith', phoneNumber: '0420224360', email: 'jane@example.com' },
-  { id: '3', name: 'Alice Johnson', phoneNumber: '0420224360', email: 'alice@example.com' },
-  { id: '4', name: 'Bob Williams', phoneNumber: '0420224360', email: 'bob@example.com' },
-  { id: '5', name: 'Charlie Brown', phoneNumber: '0420224360', email: 'charlie@example.com' },
-];
-
-// Search for users based on a query string
-export async function searchUsers(query: string): Promise<User[]> {
+// Search for users in the database
+export async function searchUsers(query: string) {
   console.log('Searching users with query:', query);
-  return users.filter((user) => user.name.toLowerCase().startsWith(query.toLowerCase()));
+
+  // Search for users in the database, case-insensitive
+  return prisma.user.findMany({
+    where: {
+      name: {
+        startsWith: query.trim(),
+        mode: 'insensitive', // Ensures the search is case-insensitive
+      },
+    },
+  });
 }
 
-// Add a new user to the list
-export async function addUser(data: Omit<User, 'id'>): Promise<User> {
-  const newId = (users.length + 1).toString();
-  const newUser = { ...data, id: newId };
-  const validatedUser = userSchema.parse(newUser);
-  users.push(validatedUser);
-  return validatedUser;
+// Add a new user to the database
+export async function addUser(data: UserFormData) {
+  console.log('Adding new user:', data);
+
+  // Validate user data
+  const validatedData = userSchema.omit({ id: true }).parse(data);
+
+  // Insert the new user into the database
+  return prisma.user.create({
+    data: validatedData,
+  });
 }
 
-// Edit an existing user's information
-export async function editUser(id: string, updatedData: Partial<Omit<User, 'id'>>): Promise<User | null> {
-  const userIndex = users.findIndex((user) => user.id === id);
+// Edit an existing user's information in the database
+export async function editUser(
+  id: string,
+  updatedData: Partial<UserFormData>
+): Promise<User | null> {
+  console.log(`Editing user with ID ${id}:`, updatedData);
 
-  if (userIndex === -1) {
-    console.error(`User with ID ${id} not found.`);
+  // Validate updated data
+  const validatedData = userSchema.omit({ id: true }).partial().parse(updatedData);
+
+  // Update the user in the database
+  try {
+    return await prisma.user.update({
+      where: { id },
+      data: validatedData,
+    });
+  } catch (error) {
+    console.error(`Error updating user with ID ${id}:`, error);
     return null;
   }
+}
 
-  const updatedUser = { ...users[userIndex], ...updatedData };
-  const validatedUser = userSchema.parse(updatedUser); // Validate the updated user data
-  users[userIndex] = validatedUser;
+// Delete a user from the database (optional)
+export async function deleteUser(id: string): Promise<void> {
+  console.log(`Deleting user with ID ${id}`);
 
-  console.log('User updated:', validatedUser);
-  return validatedUser;
+  try {
+    await prisma.user.delete({
+      where: { id },
+    });
+    console.log(`User with ID ${id} deleted successfully.`);
+  } catch (error) {
+    console.error(`Error deleting user with ID ${id}:`, error);
+  }
 }
